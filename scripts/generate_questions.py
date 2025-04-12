@@ -28,45 +28,46 @@ def generate_questions_from_edital(edital_content, sample_questions):
 
     return questions
 
+def generate_questions_from_programmatic_content(content):
+    """
+    Gera perguntas com base no conteúdo programático extraído do edital.
+    """
+    questions = []
+    for line in content:
+        if len(line.strip()) > 10:  # Ignorar linhas muito curtas
+            question = {
+                "question": f"É verdadeiro ou falso que: {line.strip()}?",
+                "answer": "Certo"  # Resposta padrão
+            }
+            questions.append(question)
+    return questions
+
 def generate_questions_from_pdf(pdf_files, edital_file):
     questions = []
     
     # Extract text from each PDF file
+    if not pdf_files:
+        raise ValueError("No valid PDF files found to process.")
+    
     for pdf_file in pdf_files:
         text = extract_text_from_pdf(pdf_file)
         questions += generate_questions_from_text(text)
 
     # Generate additional questions based on the edital
     if os.path.exists(edital_file):
-        with open(edital_file, 'rb') as file:
+        # Use PyPDF2 to extract text from the edital PDF
+        with open(edital_file, 'rb') as file:  # Abrir como binário
             reader = PyPDF2.PdfReader(file)
             edital_content = ""
             for page in reader.pages:
                 edital_content += page.extract_text()
-        
-        # Use the content of the edital to generate questions
-        sample_questions = generate_questions_from_text(edital_content)
-        questions += generate_questions_from_edital(edital_content, sample_questions)
+            questions += generate_questions_from_text(edital_content)
     else:
         raise FileNotFoundError(f"Edital file not found: {edital_file}")
 
     return questions
 
 def generate_questions_from_text(text):
-    # Generate questions based on simple rules
-    questions = []
-    sentences = text.split('.')
-    
-    for sentence in sentences:
-        sentence = sentence.strip()
-        if len(sentence) > 20:  # Only consider meaningful sentences
-            question = {
-                "question": f"É verdadeiro ou falso que: {sentence}?",
-                "answer": "Certo"  # Default answer
-            }
-            questions.append(question)
-    
-    return questions
     # Generate questions based on simple rules
     questions = []
     sentences = text.split('.')
